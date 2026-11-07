@@ -87,4 +87,5 @@ CLAUDE.md
 .cursorrules
 
 # GitHub config (local only)
-.github/
+.github/*
+!.github/workflows/
