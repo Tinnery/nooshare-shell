@@ -22,6 +22,11 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: ${{ matrix.python-version }}
+      - name: Build and install package
+        run: |
+          python -m pip install --no-deps .
+          cd "$RUNNER_TEMP"
+          python -c "import nooshare_flow; print(nooshare_flow.__file__)"
       - name: Compile package and tests
         run: python -m compileall -q nooshare_flow tests
       - name: Run tests
