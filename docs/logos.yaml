@@ -1,0 +1,19 @@
+schema_version: 1
+
+project:
+  name: nooshare-shell
+  description: Shell for noos-project.
+  scope: Public version of the internal project.
+
+resources:
+  - path: LOGOS.md
+    kind: knowledge-system-definition
+    status: current
+    authority: normative
+    read_when: When first encountering the project, understand the boundaries, rules, authority, and maintenance principles of the Logos knowledge system.
+
+  - path: VISION.md
+    kind: vision
+    status: current
+    authority: direction
+    read_when: When handling system goals, research positioning, autonomous permission boundaries, or knowledge evolution principles.
