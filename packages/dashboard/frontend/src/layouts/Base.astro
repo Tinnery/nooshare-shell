@@ -1,0 +1,63 @@
+---
+interface Props {
+  title: string;
+}
+
+const { title } = Astro.props;
+---
+
+<!DOCTYPE html>
+<html lang="zh-CN" class="h-full">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>{title} | NooShare Dashboard</title>
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+  </head>
+  <body class="h-full bg-gray-50 text-gray-900">
+    <div class="flex h-full flex-col">
+      <!-- Header -->
+      <header class="fixed top-0 z-50 w-full border-b border-gray-200 bg-white">
+        <div class="flex h-16 items-center justify-between px-6">
+          <div class="flex items-center gap-4">
+            <a href="/" class="text-xl font-semibold text-gray-900">
+              NooShare Dashboard
+            </a>
+          </div>
+          <div class="flex items-center gap-4">
+            <button id="theme-toggle" class="rounded-lg p-2 text-gray-500 hover:bg-gray-100">
+              <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z" />
+              </svg>
+            </button>
+          </div>
+        </div>
+      </header>
+
+      <!-- Main content -->
+      <div class="flex flex-1 pt-16">
+        <!-- Sidebar -->
+        <aside id="sidebar" class="fixed left-0 top-16 h-[calc(100vh-4rem)] w-64 overflow-y-auto border-r border-gray-200 bg-white p-4">
+          <slot name="sidebar" />
+        </aside>
+
+        <!-- Main content area -->
+        <main class="ml-64 flex-1 overflow-y-auto p-8">
+          <slot />
+        </main>
+      </div>
+    </div>
+
+    <script>
+      // Theme toggle
+      const themeToggle = document.getElementById('theme-toggle');
+      themeToggle?.addEventListener('click', () => {
+        document.documentElement.classList.toggle('dark');
+      });
+    </script>
+  </body>
+</html>
+
+<style is:global>
+  @import "tailwindcss";
+</style>

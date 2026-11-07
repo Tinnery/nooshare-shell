@@ -28,7 +28,7 @@ class PGConfig:
         """Load configuration from environment variables."""
         import os
         return cls(
-            dbname=os.getenv("FLOWS_PG_DATABASE") or os.getenv("PGDATABASE", "nooshare"),
+            dbname=os.getenv("FLOWS_PG_DATABASE") or os.getenv("PGDATABASE", "nooshare_test"),
             user=os.getenv("FLOWS_PG_USER", os.getenv("PGUSER", "travis")),
             host=os.getenv("FLOWS_PG_HOST", os.getenv("PGHOST")),
             port=int(os.getenv("FLOWS_PG_PORT", os.getenv("PGPORT", "5432"))) if os.getenv("FLOWS_PG_PORT") or os.getenv("PGPORT") else None,
@@ -95,43 +95,50 @@ class PGAdapter:
             logger.info("Table tdx.daily ready")
     
     def load_daily_data(self, daily_dir: Path) -> int:
-        """Load daily CSV data into PostgreSQL.
+        """Load daily TSV data into PostgreSQL.
         
         Args:
-            daily_dir: Directory containing daily CSV files
+            daily_dir: Directory containing daily TSV files (tab-separated, with header)
             
         Returns:
             Number of rows loaded
         """
-        import csv
-        
         conn = self.connect()
         total = 0
         
         with conn.cursor() as cur:
             cur.execute("TRUNCATE TABLE tdx.daily")
             
-            for csv_file in sorted(daily_dir.glob("*.csv")):
-                symbol = csv_file.stem
+            for tsv_file in sorted(daily_dir.glob("*.tsv")):
+                symbol = tsv_file.stem
                 rows = []
                 seen = set()
                 
-                with open(csv_file, "r") as f:
-                    reader = csv.DictReader(f)
-                    for row in reader:
-                        key = (symbol, int(row["date"]))
+                with open(tsv_file, "r") as f:
+                    header = f.readline()  # skip header: date\topen\thigh\tlow\tclose\tvolume\tamount
+                    for line in f:
+                        line = line.strip()
+                        if not line:
+                            continue
+                        parts = line.split("\t")
+                        if len(parts) < 7:
+                            continue
+                        date_str = parts[0]
+                        o, h, l, c = parts[1], parts[2], parts[3], parts[4]
+                        v, a = parts[5], parts[6]
+                        key = (symbol, int(date_str))
                         if key in seen:
                             continue
                         seen.add(key)
                         rows.append((
                             symbol,
                             key[1],
-                            float(row["open"]),
-                            float(row["high"]),
-                            float(row["low"]),
-                            float(row["close"]),
-                            int(float(row["volume"])),
-                            float(row["amount"]),
+                            float(o),
+                            float(h),
+                            float(l),
+                            float(c),
+                            int(float(v)),
+                            float(a),
                         ))
                 
                 if rows:

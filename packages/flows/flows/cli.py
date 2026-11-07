@@ -26,6 +26,7 @@ def daily_etl(
     work_dir: Optional[Path] = typer.Option(None, help="Working directory for temporary files"),
     output_dir: Optional[Path] = typer.Option(None, help="Output directory for CSV files"),
     max_workers: int = typer.Option(8, help="Number of parallel workers for parsing"),
+    skip_extract: bool = typer.Option(False, "--skip-extract", help="Skip S3 download, use existing TSV files in work_dir"),
 ) -> None:
     """Run daily data ETL: S3 -> Parse -> PostgreSQL."""
     from flows.etl import run_daily_etl
@@ -35,5 +36,6 @@ def daily_etl(
         work_dir=work_dir,
         output_dir=output_dir,
         max_workers=max_workers,
+        skip_extract=skip_extract,
     )
     typer.echo(f"ETL completed: {result['symbols']} symbols, {result['rows_loaded']:,} rows loaded")

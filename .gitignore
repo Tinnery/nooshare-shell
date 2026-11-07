@@ -40,6 +40,7 @@ env/
 
 # Data and outputs
 data/
+datasets/
 outputs/
 logs/
 *.log

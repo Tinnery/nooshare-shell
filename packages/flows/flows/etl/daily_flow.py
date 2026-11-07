@@ -3,6 +3,7 @@
 import csv
 import logging
 import shutil
+import tarfile
 import tempfile
 import zipfile
 from concurrent.futures import ThreadPoolExecutor, as_completed
@@ -46,49 +47,34 @@ class DailyFlow:
         self.pg_adapter = PGAdapter(self.pg_config)
     
     def extract(self) -> Path:
-        """Extract phase: Download and parse .day files from S3.
+        """Extract phase: Download and extract TSV files from S3.
         
         Returns:
-            Path to directory containing daily CSV files
+            Path to directory containing daily TSV files
         """
         self.work_dir.mkdir(parents=True, exist_ok=True)
-        self.output_dir.mkdir(parents=True, exist_ok=True)
         
-        # Download hsjday.zip
-        hsjday_zip = self.work_dir / "hsjday.zip"
-        if not hsjday_zip.exists():
-            logger.info("Downloading hsjday.zip from S3...")
-            self.s3_adapter.download_file("hsjday.zip", hsjday_zip)
+        # Download daily.tar.gz
+        daily_tar = self.work_dir / "daily.tar.gz"
+        if not daily_tar.exists():
+            logger.info("Downloading daily.tar.gz from S3...")
+            self.s3_adapter.download_file("daily.tar.gz", daily_tar)
         
-        # Extract zip
-        hsjday_dir = self.work_dir / "hsjday"
-        if not hsjday_dir.exists():
-            logger.info("Extracting hsjday.zip...")
-            self._extract_zip(hsjday_zip, hsjday_dir)
+        # Extract tar.gz
+        daily_dir = self.work_dir / "daily"
+        if not daily_dir.exists():
+            logger.info("Extracting daily.tar.gz...")
+            self._extract_tar_gz(daily_tar, daily_dir)
         
-        # Find and parse .day files
-        logger.info("Finding .day files...")
-        day_files = find_day_files(hsjday_dir)
-        logger.info(f"Found {len(day_files)} .day files")
+        # Find TSV files
+        tsv_dir = daily_dir / "daily_tsv"
+        if not tsv_dir.exists():
+            raise FileNotFoundError(f"TSV directory not found: {tsv_dir}")
         
-        # Parse .day files in parallel
-        logger.info(f"Parsing .day files with {self.max_workers} workers...")
-        daily_dir = self.output_dir / "daily"
-        daily_dir.mkdir(parents=True, exist_ok=True)
+        tsv_files = list(tsv_dir.glob("*.tsv"))
+        logger.info(f"Found {len(tsv_files)} TSV files in {tsv_dir}")
         
-        symbol_count = 0
-        with ThreadPoolExecutor(max_workers=self.max_workers) as executor:
-            futures = {
-                executor.submit(self._process_day_file, day_path, daily_dir): day_path
-                for day_path in day_files
-            }
-            
-            for future in as_completed(futures):
-                if future.result():
-                    symbol_count += 1
-        
-        logger.info(f"Parsed {symbol_count} symbols to {daily_dir}")
-        return daily_dir
+        return tsv_dir
     
     def _process_day_file(self, day_path: Path, output_dir: Path) -> bool:
         """Process a single .day file and write CSV.
@@ -130,6 +116,36 @@ class DailyFlow:
                     f"{r.volume:.2f}",
                     f"{r.amount:.2f}",
                 ])
+    
+    def _extract_tar_gz(self, tar_path: Path, dest_dir: Path) -> None:
+        """Extract tar.gz file safely.
+        
+        Args:
+            tar_path: Path to tar.gz file
+            dest_dir: Destination directory
+        """
+        dest_dir.mkdir(parents=True, exist_ok=True)
+        
+        with tarfile.open(tar_path, "r:gz") as archive:
+            for member in archive.getmembers():
+                # Skip directories
+                if member.isdir():
+                    continue
+                
+                # Normalize path
+                normalized = member.name.replace("\\", "/")
+                target = dest_dir / normalized
+                
+                # Security check
+                try:
+                    target.resolve().relative_to(dest_dir.resolve())
+                except ValueError:
+                    raise ValueError(f"Unsafe TAR member path: {member.name}")
+                
+                # Extract file
+                target.parent.mkdir(parents=True, exist_ok=True)
+                with archive.extractfile(member) as source, target.open("wb") as output:
+                    shutil.copyfileobj(source, output)
     
     def _extract_zip(self, zip_path: Path, dest_dir: Path) -> None:
         """Extract ZIP file safely.
@@ -178,9 +194,12 @@ class DailyFlow:
         
         return row_count
     
-    def run(self) -> Dict:
+    def run(self, skip_extract: bool = False) -> Dict:
         """Run complete ETL flow.
         
+        Args:
+            skip_extract: If True, skip S3 download and use existing TSV files
+            
         Returns:
             Dictionary with flow results
         """
@@ -190,8 +209,14 @@ class DailyFlow:
         
         try:
             # Extract phase
-            logger.info("[1/2] Extract phase...")
-            daily_dir = self.extract()
+            if skip_extract:
+                logger.info("[1/2] Extract phase (skipped, using existing data)...")
+                daily_dir = self.work_dir / "daily" / "daily_tsv"
+                if not daily_dir.exists():
+                    raise FileNotFoundError(f"TSV directory not found: {daily_dir}")
+            else:
+                logger.info("[1/2] Extract phase...")
+                daily_dir = self.extract()
             
             # Load phase
             logger.info("[2/2] Load phase...")
@@ -199,14 +224,14 @@ class DailyFlow:
             
             logger.info("=" * 60)
             logger.info("Daily ETL Flow completed successfully")
-            logger.info(f"  Symbols: {len(list(daily_dir.glob('*.csv')))}")
+            logger.info(f"  TSV files: {len(list(daily_dir.glob('*.tsv')))}")
             logger.info(f"  Rows loaded: {row_count:,}")
             logger.info("=" * 60)
             
             return {
                 "status": "success",
                 "daily_dir": str(daily_dir),
-                "symbols": len(list(daily_dir.glob("*.csv"))),
+                "symbols": len(list(daily_dir.glob("*.tsv"))),
                 "rows_loaded": row_count,
             }
         
@@ -220,6 +245,7 @@ def run_daily_etl(
     work_dir: Optional[Path] = None,
     output_dir: Optional[Path] = None,
     max_workers: int = 8,
+    skip_extract: bool = False,
 ) -> Dict:
     """Convenience function to run daily ETL flow.
     
@@ -229,6 +255,7 @@ def run_daily_etl(
         work_dir: Working directory
         output_dir: Output directory
         max_workers: Number of parallel workers
+        skip_extract: If True, skip S3 download and use existing TSV files
         
     Returns:
         Flow results dictionary
@@ -240,4 +267,4 @@ def run_daily_etl(
         output_dir=output_dir,
         max_workers=max_workers,
     )
-    return flow.run()
+    return flow.run(skip_extract=skip_extract)
