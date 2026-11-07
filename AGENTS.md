@@ -49,12 +49,12 @@ guarantee consistent agent behavior.
 
 ## Runtime Development
 
-The runtime is implemented in `nooshare_flow/` and tested with Python's standard-library `unittest` runner.
+The runtime is implemented in `flows/` and tested with Python's standard-library `unittest` runner.
 
 Run checks from the repository root:
 
 ```bash
-python -m compileall -q nooshare_flow tests
+python -m compileall -q flows tests
 python -m unittest discover -s tests -v
 ```
 
@@ -78,6 +78,6 @@ Before acting on the project, read and align with:
 - `docs/logos.yaml` — Logos resource registry. On first encountering the project, understand the boundaries, rules, authority, and maintenance principles of the Logos knowledge system.
 - `docs/LOGOS.md` — knowledge architecture definition. Consult when changing document organization, the five-layer knowledge structure, or maintenance principles.
 - `docs/VISION.md` — project direction. Consult when changing system goals, research positioning, autonomous permission boundaries, or knowledge evolution principles.
-- `nooshare_flow/` — the framework-independent Flow runtime and its public Python API.
+- `flows/` — the framework-independent Flow runtime and data flow modules.
 
 Entry points define what must be understood before acting. They do not restrict reading other project files when the task requires it.

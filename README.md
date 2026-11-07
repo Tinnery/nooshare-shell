@@ -19,7 +19,7 @@ python -m pip install .
 Define and execute a capability:
 
 ```python
-from nooshare_flow import Flow, FlowContext, run_flow
+from flows import Flow, FlowContext, run_flow
 
 
 def normalize_text(value: str, context: FlowContext) -> str:
@@ -56,7 +56,7 @@ The initial implementation intentionally does not provide a DAG engine, task que
 Run the standard-library test suite:
 
 ```bash
-python -m compileall -q nooshare_flow tests
+python -m compileall -q flows tests
 python -m unittest discover -s tests -v
 ```
 
@@ -66,7 +66,7 @@ python -m unittest discover -s tests -v
 - `docs/LOGOS.md` — the project's knowledge architecture and maintenance principles.
 - `docs/logos.yaml` — the registry of published project knowledge.
 - `docs/VISION.md` — the public direction of the NooShare project.
-- `nooshare_flow/` — the framework-independent Flow runtime.
+- `flows/` — the framework-independent Flow runtime and data flow modules.
 
 ## Public scope
 

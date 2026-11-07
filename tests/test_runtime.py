@@ -5,7 +5,7 @@ import sys
 import unittest
 from pathlib import Path
 
-from nooshare_flow import (
+from flows import (
     Flow,
     FlowContext,
     FlowExecutionError,
@@ -14,7 +14,7 @@ from nooshare_flow import (
 )
 
 ROOT = Path(__file__).resolve().parents[1]
-PACKAGE = ROOT / "nooshare_flow"
+PACKAGE = ROOT / "flows"
 
 
 class FlowRuntimeTests(unittest.TestCase):
@@ -145,7 +145,7 @@ class FlowRuntimeTests(unittest.TestCase):
                 elif isinstance(node, ast.ImportFrom) and node.level == 0 and node.module:
                     imported_roots.add(node.module.split(".", 1)[0])
 
-        allowed = set(sys.stdlib_module_names) | {"nooshare_flow"}
+        allowed = set(sys.stdlib_module_names) | {"flows"}
         self.assertEqual(imported_roots - allowed, set())
         self.assertNotIn("dagster", imported_roots)
         self.assertNotIn("prefect", imported_roots)
