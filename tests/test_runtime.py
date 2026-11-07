@@ -128,6 +128,12 @@ class FlowRuntimeTests(unittest.TestCase):
             Flow(name="invalid.execute", execute=None)  # type: ignore[arg-type]
         with self.assertRaises(ValueError):
             FlowContext(attempt=0)
+        with self.assertRaises(ValueError):
+            FlowContext(attempt=1.5)  # type: ignore[arg-type]
+        with self.assertRaises(ValueError):
+            FlowContext(run_id=123)  # type: ignore[arg-type]
+        with self.assertRaises(ValueError):
+            Flow(name=None, execute=lambda value, context: value)  # type: ignore[arg-type]
 
     def test_runtime_has_no_orchestrator_or_third_party_imports(self) -> None:
         imported_roots: set[str] = set()
@@ -136,7 +142,7 @@ class FlowRuntimeTests(unittest.TestCase):
             for node in ast.walk(tree):
                 if isinstance(node, ast.Import):
                     imported_roots.update(alias.name.split(".", 1)[0] for alias in node.names)
-                elif isinstance(node, ast.ImportFrom) and node.module:
+                elif isinstance(node, ast.ImportFrom) and node.level == 0 and node.module:
                     imported_roots.add(node.module.split(".", 1)[0])
 
         allowed = set(sys.stdlib_module_names) | {"nooshare_flow"}

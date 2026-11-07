@@ -29,11 +29,17 @@ class FlowContext:
     metadata: Mapping[str, str] = field(default_factory=dict)
 
     def __post_init__(self) -> None:
-        if not self.run_id.strip():
-            raise ValueError("run_id must not be empty")
-        if isinstance(self.attempt, bool) or self.attempt < 1:
+        if not isinstance(self.run_id, str) or not self.run_id.strip():
+            raise ValueError("run_id must be a non-empty string")
+        if (
+            not isinstance(self.attempt, int)
+            or isinstance(self.attempt, bool)
+            or self.attempt < 1
+        ):
             raise ValueError("attempt must be a positive integer")
-        if self.parent_run_id is not None and not self.parent_run_id.strip():
+        if self.parent_run_id is not None and (
+            not isinstance(self.parent_run_id, str) or not self.parent_run_id.strip()
+        ):
             raise ValueError("parent_run_id must be None or a non-empty string")
 
         copied_metadata = dict(self.metadata)
@@ -67,10 +73,10 @@ class Flow(Generic[InputT, OutputT]):
     description: str = ""
 
     def __post_init__(self) -> None:
-        if not self.name.strip():
-            raise ValueError("Flow name must not be empty")
-        if not self.version.strip():
-            raise ValueError("Flow version must not be empty")
+        if not isinstance(self.name, str) or not self.name.strip():
+            raise ValueError("Flow name must be a non-empty string")
+        if not isinstance(self.version, str) or not self.version.strip():
+            raise ValueError("Flow version must be a non-empty string")
         if not callable(self.execute):
             raise TypeError("Flow execute must be callable")
 
