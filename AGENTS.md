@@ -2,9 +2,10 @@
 
 ## Entry Points
 
-- `docs/logos.yaml` — Logos 资源注册表。首次接触项目时，了解 Logos 知识系统的边界、规则、权威性和维护原则。
-- `docs/LOGOS.md` — 知识架构定义。处理文档组织方式、五层知识结构和维护原则时。
-- `docs/VISION.md` — 项目愿景。处理系统目标、研究定位、自主权限边界或知识演化原则时。
+- `docs/logos.yaml` — Logos resource registry. On first encountering the project, understand the boundaries, rules, authority, and maintenance principles of the Logos knowledge system.
+- `docs/LOGOS.md` — knowledge architecture definition. Consult when changing document organization, the five-layer knowledge structure, or maintenance principles.
+- `docs/VISION.md` — project direction. Consult when changing system goals, research positioning, autonomous permission boundaries, or knowledge evolution principles.
+- `nooshare_flow/` — the framework-independent Flow runtime and its public Python API.
 
 ## Operating Model
 
@@ -52,6 +53,19 @@ guarantee consistent agent behavior.
 - **Preserve material rationale**: State operational instructions and constraints explicitly. Preserve rationale for non-obvious decisions, material trade-offs, safety or authorization constraints, and choices that may affect future changes. Do not document rationale for self-evident implementation details.
 
 - **Verify before claiming**: Run relevant tests and checks for changes made. Distinguish implementation, local verification, CI verification, external-service integration, and deployment. Report what was actually verified and what remains unverified.
+
+## Runtime Development
+
+The runtime is implemented in `nooshare_flow/` and tested with Python's standard-library `unittest` runner.
+
+Run checks from the repository root:
+
+```bash
+python -m compileall -q nooshare_flow tests
+python -m unittest discover -s tests -v
+```
+
+The runtime must remain independent of orchestration frameworks and third-party runtime packages. Host-specific behavior belongs in adapters outside the runtime package.
 
 ## Writing Constraints
 
