@@ -78,3 +78,12 @@ coverage.xml
 
 # Pytest
 .pytest_cache/
+
+# AI assistants (local only)
+.workbuddy/
+CLAUDE.md
+.cursor/
+.cursorrules
+
+# GitHub config (local only)
+.github/
