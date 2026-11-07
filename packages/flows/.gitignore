@@ -1,0 +1,25 @@
+# UV & Virtual Env
+.venv/
+
+# Python Bytecode
+__pycache__/
+*.py[cod]
+
+# Env Files
+.env
+.env.*
+
+# Test Artifacts
+.pytest_cache/
+.coverage
+htmlcov/
+
+# Build & Distribution
+dist/
+build/
+*.egg-info/
+
+# IDE & OS
+.vscode/
+.idea/
+.DS_Store
