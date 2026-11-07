@@ -1,8 +1,8 @@
 # NooShare Shell
 
-NooShare Shell is the public-facing project shell for NooShare. It publishes selected project context, Agent operating guidance, and knowledge-system rules.
+NooShare Shell is the public project shell for NooShare. It publishes project direction, Agent operating guidance, and knowledge-system rules.
 
-This is a documentation and governance repository. It is not the NooShare application source repository, a runnable ETL framework, or a complete mirror of internal development work.
+This is a documentation and governance repository. It is not the NooShare application source repository, a runnable ETL framework, or a complete mirror of implementation work.
 
 ## Contents
 
@@ -13,9 +13,9 @@ This is a documentation and governance repository. It is not the NooShare applic
 
 ## Public scope
 
-Only material intentionally approved for public release belongs here. Internal implementation source, private datasets, credentials, operational configuration, sensitive infrastructure details, and unpublished decisions remain in their authoritative locations. They must not be copied into this repository automatically.
+This repository contains material intended for public release. Implementation source, private datasets, credentials, operational configuration, sensitive infrastructure details, and unpublished decisions belong in their respective authoritative locations unless they have been explicitly reviewed and approved for publication here.
 
-Public documents should be reviewed for disclosure, accuracy, and ongoing maintenance before publication. A statement of project direction does not imply that the corresponding capability has already been implemented.
+Public documents should be reviewed for accuracy and ongoing maintainability. A statement of project direction does not imply that the corresponding capability has already been implemented.
 
 ## Project status
 
@@ -23,7 +23,7 @@ This repository currently provides project context and governance guidance. It d
 
 ## Licensing
 
-No license is currently provided. Do not assume that this repository grants permission to reuse, modify, or distribute its contents. Licensing will be added only after the applicable rights and intended reuse terms have been confirmed.
+No license is currently provided. Public visibility does not itself grant permission to reuse, modify, or distribute the contents. Licensing will be added when the applicable rights and intended reuse terms have been confirmed.
 
 ## Contributions and support
 

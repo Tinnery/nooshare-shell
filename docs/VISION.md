@@ -2,18 +2,24 @@
 
 ## Purpose
 
-NooShare is an AI-native research project initially centered on A-share markets. Its direction is to give AI research agents a reliable foundation for investigating market and company questions through traceable data, reproducible processing, and reviewable evidence and judgments.
+NooShare aims to build an AI-native research system that helps AI agents investigate complex questions through traceable source material, reproducible processing, structured evidence, and reviewable judgments.
 
-## Role of This Repository
+The system should make research processes explainable and verifiable. Conclusions should remain open to correction and revision when new evidence becomes available.
 
-NooShare Shell publishes selected project context, Agent operating guidance, and knowledge-system rules. It is the public-facing governance shell for NooShare, not the application's source repository or a complete mirror of internal development work.
+## Role of NooShare Shell
+
+NooShare Shell is the public project shell for NooShare. It maintains public project direction, Agent operating guidance, and knowledge-system rules.
+
+The Shell provides durable context for understanding the project's goals and how its knowledge is organized. Application components and implementation work may be maintained in their respective repositories.
 
 ## Public Boundary
 
-Only material intentionally approved for public release is maintained here. Implementation code, private datasets, credentials, sensitive infrastructure details, and unpublished decisions remain outside this repository unless they have been explicitly reviewed and approved for publication.
+This repository contains material intended for public release. Implementation code, private datasets, credentials, sensitive infrastructure details, and unpublished decisions are published here only after explicit review and approval.
+
+Public project documents should describe intended direction separately from verified implementation. A documented goal does not imply that the corresponding capability already exists.
 
 ## Evolution
 
-Published direction guides future work but does not assert that every described capability already exists. Claims about implementation and operating status must be supported by current source code, configuration, or verification evidence.
+NooShare should evolve through a verifiable relationship between source material, processing, evidence, and judgment. New evidence may challenge existing interpretations and should be able to trigger their review.
 
-The Shell should remain focused on durable public context that can be maintained accurately. It should not become an automatic export of internal project knowledge.
+The Shell should remain focused on accurate, durable public context. It should not become an automatic export of every project record.
