@@ -78,6 +78,3 @@ coverage.xml
 
 # Pytest
 .pytest_cache/
-
-# Local AI assistant config
-AGENTS.md
