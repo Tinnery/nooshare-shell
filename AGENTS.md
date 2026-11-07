@@ -1,12 +1,5 @@
 # AGENTS.md
 
-## Entry Points
-
-- `docs/logos.yaml` — Logos resource registry. On first encountering the project, understand the boundaries, rules, authority, and maintenance principles of the Logos knowledge system.
-- `docs/LOGOS.md` — knowledge architecture definition. Consult when changing document organization, the five-layer knowledge structure, or maintenance principles.
-- `docs/VISION.md` — project direction. Consult when changing system goals, research positioning, autonomous permission boundaries, or knowledge evolution principles.
-- `nooshare_flow/` — the framework-independent Flow runtime and its public Python API.
-
 ## Operating Model
 
 AI agents are the primary engineering maintainers of this project.
@@ -77,3 +70,14 @@ When writing project documentation, code comments, or any text that becomes part
 - **Evidence-based statements**: State verified facts directly. Identify assumptions, estimates, hypotheses, and unverified conditions explicitly. Never remove uncertainty merely to make a statement sound decisive.
 - **Express a position**: When recommending an approach, state the preferred option and its assumptions. Identify unresolved facts instead of hiding uncertainty behind vague statements such as "it depends".
 - **No metadata stacking.** Do not add parenthetical meta-descriptions like "(index value: factual-reference)" unless the identifier is directly used in code or configuration.
+
+## Entry Points
+
+Before acting on the project, read and align with:
+
+- `docs/logos.yaml` — Logos resource registry. On first encountering the project, understand the boundaries, rules, authority, and maintenance principles of the Logos knowledge system.
+- `docs/LOGOS.md` — knowledge architecture definition. Consult when changing document organization, the five-layer knowledge structure, or maintenance principles.
+- `docs/VISION.md` — project direction. Consult when changing system goals, research positioning, autonomous permission boundaries, or knowledge evolution principles.
+- `nooshare_flow/` — the framework-independent Flow runtime and its public Python API.
+
+Entry points define what must be understood before acting. They do not restrict reading other project files when the task requires it.
