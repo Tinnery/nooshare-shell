@@ -2,8 +2,12 @@ schema_version: 1
 
 project:
   name: nooshare-shell
-  description: Shell for noos-project.
-  scope: Public version of the internal project.
+  description: Public-facing governance shell for the NooShare project.
+  scope: >-
+    Publishes selected project direction, Agent operating guidance, and
+    knowledge-system rules. It is not the application implementation or a
+    complete mirror of internal development work. Only intentionally approved
+    public material belongs here.
 
 resources:
   - path: LOGOS.md
