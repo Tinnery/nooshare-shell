@@ -7,7 +7,18 @@ name = "nooshare-flow"
 version = "0.1.0"
 description = "A minimal framework-independent Flow execution runtime."
 requires-python = ">=3.12"
-dependencies = []
+dependencies = [
+    "dagster>=1.9",
+    "dagster-webserver>=1.9",
+]
+
+[project.optional-dependencies]
+aws = ["boto3>=1.35"]
+postgres = ["psycopg2-binary>=2.9"]
+all = [
+    "boto3>=1.35",
+    "psycopg2-binary>=2.9",
+]
 
 [tool.setuptools.packages.find]
-include = ["nooshare_flow*"]
+include = ["flows*"]

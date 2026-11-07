@@ -1,0 +1,4 @@
+# uv 配置 - 使用阿里云 PyPI 镜像
+[[index]]
+url = "https://mirrors.aliyun.com/pypi/simple/"
+default = true
