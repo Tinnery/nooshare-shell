@@ -77,7 +77,7 @@ class PGAdapter:
         """Create daily price table if not exists."""
         conn = self.connect()
         with conn.cursor() as cur:
-            cur.execute("CREATE SCHEMA IF NOT EXISTS tdx")
+            cur.execute("CREATE SCHEMA IF NOT EXISTS tong")
             cur.execute("""
                 CREATE TABLE IF NOT EXISTS tong.daily (
                     symbol TEXT NOT NULL,
