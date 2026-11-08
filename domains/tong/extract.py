@@ -363,9 +363,7 @@ def extract_tong_data(
     else:
         # 1. 准备 hsjday.zip
         if hsjday_zip is None:
-            hsjday_key = os.getenv(
-                "NOOSHARE_TONG_HSJDAY_OBJECT", "hsjday.zip"
-            ).strip()
+            hsjday_key = os.getenv("NOOSHARE_TONG_HSJDAY_OBJECT", "").strip()
             if not hsjday_key:
                 raise RuntimeError("NOOSHARE_TONG_HSJDAY_OBJECT must not be empty")
             hsjday_zip = work_dir / Path(hsjday_key).name
@@ -381,9 +379,7 @@ def extract_tong_data(
 
         # 2. 准备 gbbq.zip（或直接用 gbbq 文件）
         if gbbq_zip is None:
-            gbbq_key = os.getenv(
-                "NOOSHARE_TONG_GBBQ_OBJECT", "gbbq.zip"
-            ).strip()
+            gbbq_key = os.getenv("NOOSHARE_TONG_GBBQ_OBJECT", "").strip()
             if not gbbq_key:
                 raise RuntimeError("NOOSHARE_TONG_GBBQ_OBJECT must not be empty")
             gbbq_zip = work_dir / Path(gbbq_key).name
