@@ -370,7 +370,14 @@ def extract_tong_data(
                 raise RuntimeError("NOOSHARE_TONG_HSJDAY_OBJECT must not be empty")
             hsjday_zip = work_dir / Path(hsjday_key).name
             if not hsjday_zip.exists():
-                download_from_rustfs(hsjday_key, hsjday_zip)
+                try:
+                    download_from_rustfs(hsjday_key, hsjday_zip)
+                except Exception as exc:
+                    raise RuntimeError(
+                        f"Could not read TONG hsjday object "
+                        f"s3://{os.getenv('NOOSHARE_S3_BUCKET', S3_BUCKET_DEFAULT)}/{hsjday_key}. "
+                        "Check NOOSHARE_TONG_HSJDAY_OBJECT."
+                    ) from exc
 
         # 2. 准备 gbbq.zip（或直接用 gbbq 文件）
         if gbbq_zip is None:
@@ -381,7 +388,14 @@ def extract_tong_data(
                 raise RuntimeError("NOOSHARE_TONG_GBBQ_OBJECT must not be empty")
             gbbq_zip = work_dir / Path(gbbq_key).name
             if not gbbq_zip.exists():
-                download_from_rustfs(gbbq_key, gbbq_zip)
+                try:
+                    download_from_rustfs(gbbq_key, gbbq_zip)
+                except Exception as exc:
+                    raise RuntimeError(
+                        f"Could not read TONG GBBQ object "
+                        f"s3://{os.getenv('NOOSHARE_S3_BUCKET', S3_BUCKET_DEFAULT)}/{gbbq_key}. "
+                        "Check NOOSHARE_TONG_GBBQ_OBJECT."
+                    ) from exc
 
         # 3. 解压 hsjday.zip
         logger.info("Extracting hsjday.zip...")

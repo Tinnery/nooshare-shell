@@ -1,4 +1,4 @@
-"""Run the current JQ domain pipeline against a real S3 input and ephemeral PostgreSQL."""
+"""Run the current JQ domain pipeline against S3 and ephemeral PostgreSQL."""
 
 from __future__ import annotations
 
@@ -17,49 +17,16 @@ from domains.jq.adapters.postgres import connect_postgres, replace_snapshot
 from domains.jq.adapters.rustfs import BUCKET, get_s3_client
 
 
-def _resolve_object_key(s3, requested_key: str) -> str:
-    """Resolve an exact key or a unique object with the requested basename."""
-    paginator = s3.get_paginator("list_objects_v2")
-    exact_match = False
-    basename_matches: list[str] = []
-    preview: list[str] = []
-
-    for page in paginator.paginate(Bucket=BUCKET, PaginationConfig={"PageSize": 1000}):
-        for item in page.get("Contents", []):
-            key = item["Key"]
-            if len(preview) < 50:
-                preview.append(key)
-            if key == requested_key:
-                exact_match = True
-            elif key.rsplit("/", 1)[-1] == requested_key:
-                basename_matches.append(key)
-
-    if exact_match:
-        return requested_key
-    if len(basename_matches) == 1:
-        resolved = basename_matches[0]
-        print(f"Resolved object basename {requested_key!r} to {resolved!r}")
-        return resolved
-
-    if len(basename_matches) > 1:
+def main() -> None:
+    object_key = os.getenv("NOOSHARE_S3_OBJECT", "").strip()
+    if not object_key:
         raise RuntimeError(
-            f"Multiple S3 objects have basename {requested_key!r}: "
-            f"{sorted(basename_matches)}"
+            "Set the repository variable NOOSHARE_S3_OBJECT to the exact "
+            "JQ object key in the raw bucket. The CI credentials intentionally "
+            "do not have permission to list bucket objects."
         )
 
-    raise RuntimeError(
-        f"S3 object {requested_key!r} was not found in bucket {BUCKET!r}. "
-        f"First {len(preview)} available keys: {preview}"
-    )
-
-
-def main() -> None:
-    requested_key = os.getenv("NOOSHARE_S3_OBJECT", "meta1").strip()
-    if not requested_key:
-        raise RuntimeError("NOOSHARE_S3_OBJECT must not be empty")
-
     s3 = get_s3_client()
-    object_key = _resolve_object_key(s3, requested_key)
     print(f"Reading JQ input s3://{BUCKET}/{object_key}")
 
     with tempfile.TemporaryDirectory(prefix="nooshare-jq-ci-") as temporary:
@@ -69,7 +36,8 @@ def main() -> None:
         except ClientError as exc:
             error_code = exc.response.get("Error", {}).get("Code", "Unknown")
             raise RuntimeError(
-                f"Could not download s3://{BUCKET}/{object_key}: {error_code}"
+                f"Could not read s3://{BUCKET}/{object_key} ({error_code}). "
+                "Check the exact object key configured in NOOSHARE_S3_OBJECT."
             ) from exc
 
         result = run_jq_etl([source])
@@ -105,7 +73,6 @@ def main() -> None:
                         )
                     verified_counts[table] = actual_count
 
-            # Replacing the same snapshot a second time verifies repeatability.
             repeated_counts = replace_snapshot(connection, result)
             if repeated_counts != expected_counts:
                 raise AssertionError(
