@@ -26,7 +26,7 @@ class S3Config:
         """Load configuration from environment variables."""
         import os
         return cls(
-            endpoint=os.getenv("FLOWS_S3_ENDPOINT", "http://140.245.116.134:49000"),
+            endpoint=os.getenv("FLOWS_S3_ENDPOINT", ""),
             access_key=os.getenv("FLOWS_S3_ACCESS_KEY", "readonly"),
             secret_key=os.getenv("FLOWS_S3_SECRET_KEY", "readonly2026"),
             bucket=os.getenv("FLOWS_S3_BUCKET", "tong-data"),

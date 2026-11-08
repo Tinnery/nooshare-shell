@@ -93,3 +93,7 @@ CLAUDE.md
 # GitHub config (local only)
 .github/*
 !.github/workflows/
+
+# Additional env file patterns
+*.env.*
+!.env.example
