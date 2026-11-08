@@ -62,7 +62,7 @@ def _fixture_text() -> str:
         writer.writerow(header)
         writer.writerow(row)
         buffer.seek(0)
-        compressed = gzip.compress(buffer.read().encode("utf-8"))
+        compressed = gzip.compress(buffer.read().encode("utf-8"), mtime=0)
         buffer.close()
         sections.append(f"#{tag}\n{base64.b64encode(compressed).decode('ascii')}")
     return "\n".join(sections) + "\n"
