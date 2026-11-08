@@ -22,7 +22,7 @@ def jq_rustfs_to_pg_asset(context) -> Output[dict]:
         NOOSHARE_S3_ENDPOINT: RustFS/S3 endpoint URL
         NOOSHARE_S3_ACCESS_KEY: S3 access key
         NOOSHARE_S3_SECRET_KEY: S3 secret key
-        NOOSHARE_S3_BUCKET: S3 bucket name (default: tong-data)
+        NOOSHARE_RAW_BUCKET: S3 bucket name (default: raw)
         NOOSHARE_PG_DATABASE: PostgreSQL database name (default: nooshare_test)
     
     Returns:
@@ -32,8 +32,8 @@ def jq_rustfs_to_pg_asset(context) -> Output[dict]:
     endpoint_url = os.environ["NOOSHARE_S3_ENDPOINT"]
     access_key_id = os.environ["NOOSHARE_S3_ACCESS_KEY"]
     secret_access_key = os.environ["NOOSHARE_S3_SECRET_KEY"]
-    bucket = os.environ.get("NOOSHARE_S3_BUCKET", "tong-data")
-    object_key = "meta1"
+    bucket = os.environ.get("NOOSHARE_RAW_BUCKET", "raw")
+    object_key = "jmeta"
     database = os.environ.get("NOOSHARE_PG_DATABASE", "nooshare_test")
     schema = "jq"
     

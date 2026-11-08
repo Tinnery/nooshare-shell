@@ -97,3 +97,4 @@ CLAUDE.md
 # Additional env file patterns
 *.env.*
 !.env.example
+dagster_home/
