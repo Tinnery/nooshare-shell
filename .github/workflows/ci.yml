@@ -3,7 +3,7 @@ name: CI
 on:
   pull_request:
   push:
-    branches: [master]
+    branches: [master, fix/domain-integration-ci]
   workflow_dispatch:
 
 permissions:
@@ -28,7 +28,7 @@ jobs:
 
   external-integration:
     name: External S3 and PostgreSQL integration
-    if: github.ref == 'refs/heads/master' && github.event_name != 'pull_request'
+    if: (github.ref == 'refs/heads/master' || github.ref == 'refs/heads/fix/domain-integration-ci') && github.event_name != 'pull_request'
     needs: unit
     runs-on: ubuntu-latest
 
@@ -76,6 +76,7 @@ jobs:
         run: python scripts/integration/jq_s3_to_pg.py
 
       - name: Test Tong extraction, GBBQ decryption, adjustment, and PostgreSQL
+        if: always()
         env:
           NOOSHARE_S3_ENDPOINT: ${{ secrets.NOOSHARE_S3_ENDPOINT }}
           NOOSHARE_S3_ACCESS_KEY: ${{ secrets.NOOSHARE_S3_ACCESS_KEY }}
