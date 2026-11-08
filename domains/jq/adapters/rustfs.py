@@ -9,21 +9,8 @@ import boto3
 from botocore.config import Config
 
 
-def _setting(primary: str, legacy: str, default: str) -> str:
-    return os.getenv(primary) or os.getenv(legacy) or default
-
-
-RUSTFS_ENDPOINT = _setting(
-    "NOOSHARE_S3_ENDPOINT", "NOOSHARE_RUSTFS_ENDPOINT", "http://localhost:9000"
-)
-RUSTFS_ACCESS_KEY = _setting(
-    "NOOSHARE_S3_ACCESS_KEY", "NOOSHARE_RUSTFS_ACCESS_KEY", "nooshare2026"
-)
-RUSTFS_SECRET_KEY = _setting(
-    "NOOSHARE_S3_SECRET_KEY", "NOOSHARE_RUSTFS_SECRET_KEY", "nooshareSecret2026"
-)
-RUSTFS_REGION = _setting("NOOSHARE_S3_REGION", "NOOSHARE_RUSTFS_REGION", "us-east-1")
-BUCKET = _setting("NOOSHARE_S3_BUCKET", "NOOSHARE_RUSTFS_BUCKET", "nooshare-jq")
+BUCKET = os.getenv("NOOSHARE_S3_BUCKET", "raw").strip()
+RUSTFS_REGION = os.getenv("NOOSHARE_S3_REGION", "us-east-1").strip()
 
 
 def get_s3_client(
@@ -33,13 +20,26 @@ def get_s3_client(
     secret_access_key: str | None = None,
     region_name: str | None = None,
 ):
-    """Create a path-style S3 client for RustFS, SeaweedFS or another S3 endpoint."""
+    """Create an authenticated path-style client for the configured S3 endpoint."""
+    settings = {
+        "NOOSHARE_S3_ENDPOINT": endpoint_url or os.getenv("NOOSHARE_S3_ENDPOINT"),
+        "NOOSHARE_S3_ACCESS_KEY": access_key_id or os.getenv("NOOSHARE_S3_ACCESS_KEY"),
+        "NOOSHARE_S3_SECRET_KEY": secret_access_key or os.getenv("NOOSHARE_S3_SECRET_KEY"),
+    }
+    missing = [name for name, value in settings.items() if not value]
+    if missing:
+        raise RuntimeError(
+            "Missing required S3 configuration: " + ", ".join(missing)
+        )
+    if not BUCKET:
+        raise RuntimeError("NOOSHARE_S3_BUCKET must not be empty")
+
     return boto3.client(
         "s3",
-        endpoint_url=endpoint_url or RUSTFS_ENDPOINT,
-        aws_access_key_id=access_key_id or RUSTFS_ACCESS_KEY,
-        aws_secret_access_key=secret_access_key or RUSTFS_SECRET_KEY,
-        region_name=region_name or RUSTFS_REGION,
+        endpoint_url=settings["NOOSHARE_S3_ENDPOINT"],
+        aws_access_key_id=settings["NOOSHARE_S3_ACCESS_KEY"],
+        aws_secret_access_key=settings["NOOSHARE_S3_SECRET_KEY"],
+        region_name=region_name or RUSTFS_REGION or "us-east-1",
         config=Config(
             connect_timeout=5,
             read_timeout=60,
@@ -78,7 +78,7 @@ def download_prefix(s3, bucket: str, prefix: str, dest_dir: Path) -> list[Path]:
             local_path.parent.mkdir(parents=True, exist_ok=True)
             s3.download_file(bucket, key, str(local_path))
             paths.append(local_path)
-            print(f"  下载 {key} → {local_path.relative_to(dest_dir)} ({obj['Size']:,} B)")
+            print(f"  downloaded {key} ({obj['Size']:,} bytes)")
     return sorted(paths)
 
 
@@ -87,4 +87,4 @@ def upload_files(s3, bucket: str, prefix: str, files: list[Path]) -> None:
     for file_path in files:
         key = f"{prefix}{file_path.name}"
         s3.upload_file(str(file_path), bucket, key)
-        print(f"  上传 {file_path.name} → s3://{bucket}/{key}")
+        print(f"  uploaded {file_path.name} to s3://{bucket}/{key}")

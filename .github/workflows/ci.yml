@@ -1,6 +1,7 @@
 name: CI
 
 on:
+  pull_request:
   push:
     branches: [master]
   workflow_dispatch:
@@ -9,8 +10,8 @@ permissions:
   contents: read
 
 jobs:
-  test-s3:
-    name: Test RustFS S3 Connection
+  unit:
+    name: Unit and local integration tests
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -19,67 +20,17 @@ jobs:
         with:
           python-version: "3.12"
 
-      - name: Install boto3
-        run: pip install boto3
+      - name: Compile project modules
+        run: python -m compileall -q flows domains tests scripts
 
-      - name: Test S3 connection
-        env:
-          NOOSHARE_S3_ENDPOINT: ${{ secrets.NOOSHARE_S3_ENDPOINT }}
-          NOOSHARE_S3_ACCESS_KEY: ${{ secrets.NOOSHARE_S3_ACCESS_KEY }}
-          NOOSHARE_S3_SECRET_KEY: ${{ secrets.NOOSHARE_S3_SECRET_KEY }}
-        run: |
-          python3 << 'EOF'
-          import os
-          import boto3
-          from botocore.exceptions import ClientError, NoCredentialsError
+      - name: Run standard-library test suite
+        run: python -m unittest discover -s tests -v
 
-          endpoint = os.environ.get("NOOSHARE_S3_ENDPOINT")
-          access_key = os.environ.get("NOOSHARE_S3_ACCESS_KEY")
-          secret_key = os.environ.get("NOOSHARE_S3_SECRET_KEY")
-
-          print("Checking environment variables...")
-          print(f"  NOOSHARE_S3_ENDPOINT: {'✓ set' if endpoint else '✗ missing'}")
-          print(f"  NOOSHARE_S3_ACCESS_KEY: {'✓ set' if access_key else '✗ missing'}")
-          print(f"  NOOSHARE_S3_SECRET_KEY: {'✓ set' if secret_key else '✗ missing'}")
-
-          if not all([endpoint, access_key, secret_key]):
-              print("\n❌ Some secrets are not configured")
-              exit(1)
-
-          print("\nAttempting to connect to S3...")
-          try:
-              s3 = boto3.client(
-                  "s3",
-                  endpoint_url=endpoint,
-                  aws_access_key_id=access_key,
-                  aws_secret_access_key=secret_key,
-                  region_name="us-east-1",
-              )
-
-              response = s3.list_buckets()
-              buckets = [b["Name"] for b in response.get("Buckets", [])]
-
-              print(f"✓ Connected successfully!")
-              print(f"  Found {len(buckets)} bucket(s): {', '.join(buckets[:5])}")
-
-          except NoCredentialsError as e:
-              print(f"❌ Credentials error: {e}")
-              exit(1)
-          except ClientError as e:
-              error_code = e.response.get("Error", {}).get("Code", "Unknown")
-              print(f"❌ S3 client error: {error_code}")
-              exit(1)
-          except Exception as e:
-              print(f"❌ Unexpected error: {type(e).__name__}: {e}")
-              exit(1)
-
-          print("\n✅ S3 connection test passed!")
-          EOF
-
-  test-etl:
-    name: Test JQ ETL (S3 → PostgreSQL)
+  external-integration:
+    name: External S3 and PostgreSQL integration
+    if: github.ref == 'refs/heads/master' && github.event_name != 'pull_request'
+    needs: unit
     runs-on: ubuntu-latest
-    needs: test-s3
 
     services:
       postgres:
@@ -96,6 +47,18 @@ jobs:
           --health-timeout=5s
           --health-retries=5
 
+    env:
+      NOOSHARE_S3_ENDPOINT: ${{ secrets.NOOSHARE_S3_ENDPOINT }}
+      NOOSHARE_S3_ACCESS_KEY: ${{ secrets.NOOSHARE_S3_ACCESS_KEY }}
+      NOOSHARE_S3_SECRET_KEY: ${{ secrets.NOOSHARE_S3_SECRET_KEY }}
+      NOOSHARE_S3_BUCKET: ${{ vars.NOOSHARE_S3_BUCKET || 'raw' }}
+      NOOSHARE_S3_OBJECT: ${{ vars.NOOSHARE_S3_OBJECT || 'meta1' }}
+      NOOSHARE_PG_HOST: localhost
+      NOOSHARE_PG_PORT: "5432"
+      NOOSHARE_PG_USER: nooshare
+      NOOSHARE_PG_PASSWORD: nooshare_ci_test
+      NOOSHARE_PG_DATABASE: nooshare_test
+
     steps:
       - uses: actions/checkout@v4
 
@@ -103,64 +66,13 @@ jobs:
         with:
           python-version: "3.12"
 
-      - name: Install dependencies
-        run: pip install boto3 psycopg2-binary
+      - name: Install external integration dependencies
+        run: python -m pip install boto3 psycopg2-binary
 
-      - name: Run JQ ETL pipeline
+      - name: Test current JQ domain flow against S3 and PostgreSQL
+        run: python scripts/integration/jq_s3_to_pg.py
+
+      - name: Test Tong extraction, GBBQ decryption, adjustment, and PostgreSQL
         env:
-          NOOSHARE_S3_ENDPOINT: ${{ secrets.NOOSHARE_S3_ENDPOINT }}
-          NOOSHARE_S3_ACCESS_KEY: ${{ secrets.NOOSHARE_S3_ACCESS_KEY }}
-          NOOSHARE_S3_SECRET_KEY: ${{ secrets.NOOSHARE_S3_SECRET_KEY }}
-          NOOSHARE_PG_HOST: localhost
-          NOOSHARE_PG_PORT: "5432"
-          NOOSHARE_PG_USER: nooshare
-          NOOSHARE_PG_PASSWORD: nooshare_ci_test
-          NOOSHARE_PG_DATABASE: nooshare_test
-        run: |
-          python scripts/jq/flow_rustfs_to_pg.py \
-            --bucket tong-data \
-            --object meta1 \
-            --database nooshare_test
-
-      - name: Verify loaded data
-        env:
-          NOOSHARE_PG_HOST: localhost
-          NOOSHARE_PG_PORT: "5432"
-          NOOSHARE_PG_USER: nooshare
-          NOOSHARE_PG_PASSWORD: nooshare_ci_test
-          NOOSHARE_PG_DATABASE: nooshare_test
-        run: |
-          python3 << 'EOF'
-          import os
-          import psycopg2
-
-          conn = psycopg2.connect(
-              host=os.environ["NOOSHARE_PG_HOST"],
-              port=os.environ["NOOSHARE_PG_PORT"],
-              user=os.environ["NOOSHARE_PG_USER"],
-              password=os.environ["NOOSHARE_PG_PASSWORD"],
-              dbname=os.environ["NOOSHARE_PG_DATABASE"],
-          )
-          cur = conn.cursor()
-
-          # List tables in jq schema
-          cur.execute("""
-              SELECT table_name FROM information_schema.tables
-              WHERE table_schema = 'jq' ORDER BY table_name;
-          """)
-          tables = [r[0] for r in cur.fetchall()]
-          print(f"Tables in jq schema: {len(tables)}")
-          for t in tables:
-              cur.execute(f'SELECT COUNT(*) FROM jq."{t}"')
-              count = cur.fetchone()[0]
-              print(f"  {t}: {count} rows")
-
-          cur.close()
-          conn.close()
-
-          if not tables:
-              print("❌ No tables found in jq schema")
-              exit(1)
-
-          print("\n✅ ETL pipeline test passed!")
-          EOF
+          TONG_GZZX_KEY_HEX: ${{ secrets.TONG_GZZX_KEY_HEX }}
+        run: python scripts/integration/tong_s3_to_pg.py
