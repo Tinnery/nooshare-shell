@@ -79,7 +79,7 @@ class PGAdapter:
         with conn.cursor() as cur:
             cur.execute("CREATE SCHEMA IF NOT EXISTS tdx")
             cur.execute("""
-                CREATE TABLE IF NOT EXISTS tdx.daily (
+                CREATE TABLE IF NOT EXISTS tong.daily (
                     symbol TEXT NOT NULL,
                     date INTEGER NOT NULL,
                     open DOUBLE PRECISION NOT NULL,
@@ -92,7 +92,7 @@ class PGAdapter:
                 )
             """)
             conn.commit()
-            logger.info("Table tdx.daily ready")
+            logger.info("Table tong.daily ready")
     
     def load_daily_data(self, daily_dir: Path) -> int:
         """Load daily TSV data into PostgreSQL.
@@ -107,7 +107,7 @@ class PGAdapter:
         total = 0
         
         with conn.cursor() as cur:
-            cur.execute("TRUNCATE TABLE tdx.daily")
+            cur.execute("TRUNCATE TABLE tong.daily")
             
             for tsv_file in sorted(daily_dir.glob("*.tsv")):
                 symbol = tsv_file.stem
@@ -142,7 +142,7 @@ class PGAdapter:
                         ))
                 
                 if rows:
-                    copy_sql = "COPY tdx.daily (symbol, date, open, high, low, close, volume, amount) FROM STDIN WITH (FORMAT csv)"
+                    copy_sql = "COPY tong.daily (symbol, date, open, high, low, close, volume, amount) FROM STDIN WITH (FORMAT csv)"
                     csv_buffer = io.StringIO()
                     for r in rows:
                         csv_buffer.write(f"{r[0]},{r[1]},{r[2]:.2f},{r[3]:.2f},{r[4]:.2f},{r[5]:.2f},{r[6]},{r[7]:.2f}\n")

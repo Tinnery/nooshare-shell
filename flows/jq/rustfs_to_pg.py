@@ -12,7 +12,7 @@ Usage:
         endpoint_url="...",
         access_key_id="...",
         secret_access_key="...",
-        bucket="tdx-data",
+        bucket="tong-data",
         object_key="meta1",
         database="nooshare_test"
     )
@@ -266,8 +266,8 @@ def main():
     )
     parser.add_argument(
         "--bucket",
-        default=os.environ.get("NOOSHARE_S3_BUCKET", "tdx-data"),
-        help="S3 bucket name (env: NOOSHARE_S3_BUCKET, default: tdx-data)",
+        default=os.environ.get("NOOSHARE_S3_BUCKET", "tong-data"),
+        help="S3 bucket name (env: NOOSHARE_S3_BUCKET, default: tong-data)",
     )
     parser.add_argument(
         "--object",

@@ -118,7 +118,7 @@ jobs:
           NOOSHARE_PG_DATABASE: nooshare_test
         run: |
           python scripts/jq/flow_rustfs_to_pg.py \
-            --bucket tdx-data \
+            --bucket tong-data \
             --object meta1 \
             --database nooshare_test
 

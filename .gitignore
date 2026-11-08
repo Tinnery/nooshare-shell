@@ -41,6 +41,7 @@ env/
 .env.local
 .env.*.local
 
+
 # Data and outputs
 data/
 datasets/

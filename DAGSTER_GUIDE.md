@@ -34,7 +34,7 @@ pip install -e ".[all]"
 export NOOSHARE_S3_ENDPOINT="http://your-rustfs-host:9000"
 export NOOSHARE_S3_ACCESS_KEY="your-access-key"
 export NOOSHARE_S3_SECRET_KEY="your-secret-key"
-export NOOSHARE_S3_BUCKET="tdx-data"
+export NOOSHARE_S3_BUCKET="tong-data"
 
 # PostgreSQL 凭证
 export NOOSHARE_PG_HOST="localhost"

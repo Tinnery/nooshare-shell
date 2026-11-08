@@ -21,7 +21,7 @@ def jq_data_from_rustfs():
         endpoint_url=os.environ["NOOSHARE_S3_ENDPOINT"],
         access_key_id=os.environ["NOOSHARE_S3_ACCESS_KEY"],
         secret_access_key=os.environ["NOOSHARE_S3_SECRET_KEY"],
-        bucket="tdx-data",
+        bucket="tong-data",
         object_key="meta1",
         database="nooshare_test",
         schema="jq",
@@ -40,7 +40,7 @@ from dagster import Config
 
 class JqEtlConfig(Config):
     """JQ ETL 配置"""
-    bucket: str = "tdx-data"
+    bucket: str = "tong-data"
     object_key: str = "meta1"
     database: str = "nooshare_test"
     schema: str = "jq"
@@ -159,7 +159,7 @@ def jq_data_with_resource(context):
         endpoint_url=os.environ["NOOSHARE_S3_ENDPOINT"],
         access_key_id=os.environ["NOOSHARE_S3_ACCESS_KEY"],
         secret_access_key=os.environ["NOOSHARE_S3_SECRET_KEY"],
-        bucket="tdx-data",
+        bucket="tong-data",
         object_key="meta1",
         database="nooshare_test",
         schema="jq",
@@ -198,7 +198,7 @@ def weekday_jq_etl_schedule(context):
                 "ops": {
                     "jq_rustfs_to_pg_asset": {
                         "config": {
-                            "bucket": "tdx-data",
+                            "bucket": "tong-data",
                             "object_key": "meta1",
                         }
                     }
@@ -254,7 +254,7 @@ def partitioned_jq_data(context):
         endpoint_url=os.environ["NOOSHARE_S3_ENDPOINT"],
         access_key_id=os.environ["NOOSHARE_S3_ACCESS_KEY"],
         secret_access_key=os.environ["NOOSHARE_S3_SECRET_KEY"],
-        bucket="tdx-data",
+        bucket="tong-data",
         object_key=f"meta1-{partition_key}",  # 按日期分区的 object key
         database="nooshare_test",
         schema="jq",

@@ -1,4 +1,4 @@
-"""TDX data parsing and transformation."""
+"""Tong data parsing and transformation."""
 
 from .parser import parse_day_file, DailyRecord
 

@@ -12,7 +12,7 @@ from typing import Dict, Optional
 
 from ..pg import PGAdapter, PGConfig
 from ..s3 import S3Adapter, S3Config
-from ..tdx.parser import DailyRecord, find_day_files, parse_day_file
+from ..tong.parser import DailyRecord, find_day_files, parse_day_file
 
 logger = logging.getLogger(__name__)
 

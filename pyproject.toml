@@ -21,4 +21,4 @@ all = [
 ]
 
 [tool.setuptools.packages.find]
-include = ["flows*"]
+include = ["flows*", "domains*"]

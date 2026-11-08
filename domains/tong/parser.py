@@ -1,58 +1,46 @@
-"""TDX .day binary file parser."""
+"""Tong .day 二进制文件解析器。"""
 
 import struct
-from dataclasses import dataclass
 from pathlib import Path
 from typing import List
+from .models import DailyPrice
 
 
-@dataclass
-class DailyRecord:
-    """Daily price record from TDX .day file."""
+def parse_day_file(day_path: Path, symbol: str = None) -> List[DailyPrice]:
+    """
+    解析 Tong .day 二进制文件。
     
-    symbol: str
-    date: int  # YYYYMMDD format
-    open: float
-    high: float
-    low: float
-    close: float
-    volume: int
-    amount: float
-
-
-def parse_day_file(day_path: Path, symbol: str = None) -> List[DailyRecord]:
-    """Parse TDX .day binary file.
-    
-    Format: Each record is 32 bytes with structure <IIIIIfII
+    格式：每条记录 32 字节，结构为 <IIIIIIIf
     - date: uint32 (YYYYMMDD)
-    - open: uint32 (price / 100)
+    - open: uint32 (价格，除以 100 得到元)
     - high: uint32
     - low: uint32
     - close: uint32
-    - amount: float32 (turnover)
-    - volume: uint32 (volume)
-    - reserved: uint32
+    - amount: float32 (成交额)
+    - volume: uint32 (成交量)
+    - reserved: uint32 (保留字段)
     
     Args:
-        day_path: Path to .day file
-        symbol: Stock symbol, extracted from filename if None
-        
+        day_path: .day 文件路径
+        symbol: 股票代码，如果为 None 则从文件名提取
+    
     Returns:
-        List of DailyRecord
+        DailyPrice 列表
     """
     if symbol is None:
-        symbol = day_path.stem
+        symbol = day_path.stem  # 去掉 .day 后缀
     
     data = day_path.read_bytes()
     record_size = 32
     
     if len(data) % record_size != 0:
-        raise ValueError(f"File {day_path} size is not a multiple of {record_size}")
+        raise ValueError(f"文件 {day_path} 大小不是 {record_size} 的倍数")
     
     count = len(data) // record_size
     records = []
     
-    # Format: date(I) open(I) high(I) low(I) close(I) amount(f) volume(I) reserved(I)
+    # 使用 struct 批量解析，提高效率
+    # 格式：date(I) open(I) high(I) low(I) close(I) amount(f) volume(I) reserved(I)
     fmt = '<IIIIIfII'
     
     for i in range(count):
@@ -61,11 +49,11 @@ def parse_day_file(day_path: Path, symbol: str = None) -> List[DailyRecord]:
         
         date, open_raw, high_raw, low_raw, close_raw, amount, volume, _ = struct.unpack(fmt, chunk)
         
-        # Filter data before 2008
+        # 过滤掉 2008 年之前的数据
         if date < 20080101:
             continue
         
-        records.append(DailyRecord(
+        records.append(DailyPrice(
             symbol=symbol,
             date=date,
             open=open_raw / 100.0,
@@ -80,14 +68,7 @@ def parse_day_file(day_path: Path, symbol: str = None) -> List[DailyRecord]:
 
 
 def find_day_files(root_dir: Path) -> List[Path]:
-    """Recursively find all .day files.
-    
-    Args:
-        root_dir: Root directory to search
-        
-    Returns:
-        Sorted list of .day file paths
-    """
+    """递归查找所有 .day 文件。"""
     day_files = []
     for path in root_dir.rglob('*.day'):
         if path.is_file():

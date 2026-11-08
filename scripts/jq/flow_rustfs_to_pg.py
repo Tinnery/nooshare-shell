@@ -8,14 +8,14 @@ Usage:
     export NOOSHARE_S3_SECRET_KEY="..."
     
     # Run the flow
-    python scripts/jq/flow_rustfs_to_pg.py --bucket tdx-data --object meta1 --database nooshare_test
+    python scripts/jq/flow_rustfs_to_pg.py --bucket tong-data --object meta1 --database nooshare_test
     
     # Or override via CLI arguments
     python scripts/jq/flow_rustfs_to_pg.py \\
         --endpoint "..." \\
         --access-key "..." \\
         --secret-key "..." \\
-        --bucket tdx-data \\
+        --bucket tong-data \\
         --object meta1 \\
         --database nooshare_test
 """
@@ -56,8 +56,8 @@ def main():
     )
     parser.add_argument(
         "--bucket",
-        default="tdx-data",
-        help="S3 bucket name (default: tdx-data)",
+        default="tong-data",
+        help="S3 bucket name (default: tong-data)",
     )
     parser.add_argument(
         "--object",
