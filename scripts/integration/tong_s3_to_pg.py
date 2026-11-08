@@ -5,6 +5,9 @@ from __future__ import annotations
 import tempfile
 from pathlib import Path
 
+import psycopg2
+from psycopg2 import sql
+
 from domains.tong.flow import run_full_pipeline
 from domains.tong.adapters.postgres import postgres_config
 
@@ -21,10 +24,7 @@ def main() -> None:
             replace_snapshot=True,
         )
 
-    counts = result.get("postgresql")
-    if not isinstance(counts, dict) or not counts:
-        raise AssertionError("Tong pipeline did not publish PostgreSQL tables")
-
+    expected_counts = result.get("postgresql")
     expected_tables = {
         "daily",
         "daily_hfq",
@@ -32,13 +32,42 @@ def main() -> None:
         "gbbq",
         "symbol_class",
     }
-    if set(counts) != expected_tables:
+    if not isinstance(expected_counts, dict) or set(expected_counts) != expected_tables:
         raise AssertionError(
-            f"Tong published unexpected table set: {sorted(counts)}"
+            f"Tong published unexpected table set: {sorted(expected_counts or {})}"
         )
 
+    verified_counts = {}
+    with psycopg2.connect(**postgres_config()) as connection:
+        with connection.cursor() as cursor:
+            cursor.execute(
+                "SELECT table_name FROM information_schema.tables "
+                "WHERE table_schema = 'tong' ORDER BY table_name"
+            )
+            actual_tables = {row[0] for row in cursor.fetchall()}
+            if actual_tables != expected_tables:
+                raise AssertionError(
+                    f"Tong PostgreSQL tables differ: "
+                    f"expected={sorted(expected_tables)}, "
+                    f"actual={sorted(actual_tables)}"
+                )
+
+            for table, expected_count in sorted(expected_counts.items()):
+                query = sql.SQL("SELECT COUNT(*) FROM {}.{}").format(
+                    sql.Identifier("tong"),
+                    sql.Identifier(table),
+                )
+                cursor.execute(query)
+                actual_count = cursor.fetchone()[0]
+                if actual_count != expected_count:
+                    raise AssertionError(
+                        f"tong.{table} row count mismatch: "
+                        f"expected={expected_count}, actual={actual_count}"
+                    )
+                verified_counts[table] = actual_count
+
     print("Tong domain integration passed")
-    for table, count in sorted(counts.items()):
+    for table, count in verified_counts.items():
         print(f"  tong.{table}: {count:,} rows")
 
 
