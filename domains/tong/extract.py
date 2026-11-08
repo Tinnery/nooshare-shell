@@ -25,12 +25,9 @@ from .parser import parse_day_file
 
 logger = logging.getLogger(__name__)
 
-# RustFS / S3 配置
-RUSTFS_ENDPOINT = os.getenv("NOOSHARE_RUSTFS_ENDPOINT", "http://localhost:9000")
-RUSTFS_ACCESS_KEY = os.getenv("NOOSHARE_RUSTFS_ACCESS_KEY", "nooshare2026")
-RUSTFS_SECRET_KEY = os.getenv("NOOSHARE_RUSTFS_SECRET_KEY", "nooshareSecret2026")
-RUSTFS_REGION = os.getenv("NOOSHARE_RUSTFS_REGION", "us-east-1")
-RUSTFS_BUCKET = os.getenv("NOOSHARE_RUSTFS_Tong_BUCKET", "tong-data")
+# Shared S3 configuration is read when the client is created.
+S3_BUCKET_DEFAULT = "raw"
+S3_REGION_DEFAULT = "us-east-1"
 
 # 分类规则（与 Go classify.go 完全一致）
 CLASS_STOCK = "stock"
@@ -73,13 +70,24 @@ MIN_DATE = 20080101
 
 
 def _get_s3_client():
-    """创建 S3 客户端"""
+    """Create an S3 client using the shared NooShare secrets contract."""
+    settings = {
+        "NOOSHARE_S3_ENDPOINT": os.getenv("NOOSHARE_S3_ENDPOINT"),
+        "NOOSHARE_S3_ACCESS_KEY": os.getenv("NOOSHARE_S3_ACCESS_KEY"),
+        "NOOSHARE_S3_SECRET_KEY": os.getenv("NOOSHARE_S3_SECRET_KEY"),
+    }
+    missing = [name for name, value in settings.items() if not value]
+    if missing:
+        raise RuntimeError(
+            "Missing required S3 configuration: " + ", ".join(missing)
+        )
+
     return boto3.client(
         "s3",
-        endpoint_url=RUSTFS_ENDPOINT,
-        aws_access_key_id=RUSTFS_ACCESS_KEY,
-        aws_secret_access_key=RUSTFS_SECRET_KEY,
-        region_name=RUSTFS_REGION,
+        endpoint_url=settings["NOOSHARE_S3_ENDPOINT"],
+        aws_access_key_id=settings["NOOSHARE_S3_ACCESS_KEY"],
+        aws_secret_access_key=settings["NOOSHARE_S3_SECRET_KEY"],
+        region_name=os.getenv("NOOSHARE_S3_REGION", S3_REGION_DEFAULT),
         config=Config(
             connect_timeout=5,
             read_timeout=60,
@@ -91,11 +99,14 @@ def _get_s3_client():
 
 
 def download_from_rustfs(s3_key: str, local_path: Path) -> Path:
-    """从 RustFS 下载文件到本地"""
+    """Download a Tong archive from the shared S3 bucket."""
+    bucket = os.getenv("NOOSHARE_S3_BUCKET", S3_BUCKET_DEFAULT).strip()
+    if not bucket:
+        raise RuntimeError("NOOSHARE_S3_BUCKET must not be empty")
     client = _get_s3_client()
     local_path.parent.mkdir(parents=True, exist_ok=True)
-    logger.info(f"Downloading s3://{RUSTFS_BUCKET}/{s3_key} -> {local_path}")
-    client.download_file(RUSTFS_BUCKET, s3_key, str(local_path))
+    logger.info(f"Downloading s3://{bucket}/{s3_key} -> {local_path}")
+    client.download_file(bucket, s3_key, str(local_path))
     return local_path
 
 
@@ -352,15 +363,35 @@ def extract_tong_data(
     else:
         # 1. 准备 hsjday.zip
         if hsjday_zip is None:
-            hsjday_zip = work_dir / "hsjday.zip"
+            hsjday_key = os.getenv("NOOSHARE_TONG_HSJDAY_OBJECT", "").strip()
+            if not hsjday_key:
+                raise RuntimeError("NOOSHARE_TONG_HSJDAY_OBJECT must not be empty")
+            hsjday_zip = work_dir / Path(hsjday_key).name
             if not hsjday_zip.exists():
-                download_from_rustfs("hsjday.zip", hsjday_zip)
+                try:
+                    download_from_rustfs(hsjday_key, hsjday_zip)
+                except Exception as exc:
+                    raise RuntimeError(
+                        f"Could not read TONG hsjday object "
+                        f"s3://{os.getenv('NOOSHARE_S3_BUCKET', S3_BUCKET_DEFAULT)}/{hsjday_key}. "
+                        "Check NOOSHARE_TONG_HSJDAY_OBJECT."
+                    ) from exc
 
         # 2. 准备 gbbq.zip（或直接用 gbbq 文件）
         if gbbq_zip is None:
-            gbbq_zip = work_dir / "gbbq.zip"
+            gbbq_key = os.getenv("NOOSHARE_TONG_GBBQ_OBJECT", "").strip()
+            if not gbbq_key:
+                raise RuntimeError("NOOSHARE_TONG_GBBQ_OBJECT must not be empty")
+            gbbq_zip = work_dir / Path(gbbq_key).name
             if not gbbq_zip.exists():
-                download_from_rustfs("gbbq.zip", gbbq_zip)
+                try:
+                    download_from_rustfs(gbbq_key, gbbq_zip)
+                except Exception as exc:
+                    raise RuntimeError(
+                        f"Could not read TONG GBBQ object "
+                        f"s3://{os.getenv('NOOSHARE_S3_BUCKET', S3_BUCKET_DEFAULT)}/{gbbq_key}. "
+                        "Check NOOSHARE_TONG_GBBQ_OBJECT."
+                    ) from exc
 
         # 3. 解压 hsjday.zip
         logger.info("Extracting hsjday.zip...")

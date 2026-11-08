@@ -29,7 +29,15 @@ def _load_hex_keys() -> bytes:
     hex_str = os.environ.get("TONG_GZZX_KEY_HEX", "").strip()
     if not hex_str:
         raise ValueError("环境变量 TONG_GZZX_KEY_HEX 未设置，请在 .env 中配置")
-    return bytes.fromhex(hex_str)
+    try:
+        keys = bytes.fromhex(hex_str)
+    except ValueError as exc:
+        raise ValueError("TONG_GZZX_KEY_HEX must contain valid hexadecimal data") from exc
+    if len(keys) != 4176:
+        raise ValueError(
+            "TONG_GZZX_KEY_HEX must decode to exactly 4176 bytes"
+        )
+    return keys
 
 
 def _read_u32(data: bytes, offset: int) -> int:
